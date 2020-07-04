@@ -28,6 +28,10 @@ class MyGame(arcade.Window):
         self.view_bottom = 0
         self.view_left = 0
 
+        # Load sounds
+        self.collect_coin_sound = arcade.load_sound(":resources:sounds/coin1.wav")
+        self.jump_sound = arcade.load_sound(":resources:sounds/jump1.wav")
+
     def setup(self):
         self.player_list = arcade.SpriteList()
         self.wall_list = arcade.SpriteList(use_spatial_hash=True)
@@ -51,12 +55,18 @@ class MyGame(arcade.Window):
             wall = arcade.Sprite(":resources:images/tiles/boxCrate_double.png", TILE_SCALING)
             wall.position = coordinate
             self.wall_list.append(wall)
+            # Use a loop to place some coins for our character to pick up
+            for x in range(128, 1250, 256):
+                coin = arcade.Sprite(":resources:images/items/coinGold.png", COIN_SCALING)
+                coin.center_x = x
+                coin.center_y = 96
+                self.coin_list.append(coin)
 
     def on_draw(self):
         arcade.start_render()
+        self.coin_list.draw()
         self.wall_list.draw()
         self.player_list.draw()
-        self.coin_list.draw()
 
     def on_key_press(self, symbol: int, modifiers: int):
         # if symbol == arcade.key.UP or symbol == arcade.key.W:
@@ -66,6 +76,7 @@ class MyGame(arcade.Window):
         if symbol == arcade.key.UP or symbol == arcade.key.W:
             if self.physics_engine.can_jump():
                 self.player_sprite.change_y = PLAYER_JUMP_SPEED
+                arcade.play_sound(self.jump_sound)
 
         elif symbol == arcade.key.RIGHT or symbol == arcade.key.D:
             self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
@@ -84,7 +95,16 @@ class MyGame(arcade.Window):
 
     def on_update(self, delta_time: float):
         self.physics_engine.update()
+        # See if we hit any coins
+        coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite,
+                                                             self.coin_list)
 
+        # Loop through each coin we hit (if any) and remove it
+        for coin in coin_hit_list:
+            # Remove the coin
+            coin.remove_from_sprite_lists()
+            # Play a sound
+            arcade.play_sound(self.collect_coin_sound)
         changed = False
         left_boundary = self.view_left + LEFT_VIEWPORT_MARGIN
         if self.player_sprite.left < left_boundary:
