@@ -23,14 +23,14 @@ class MyGame(arcade.Window):
         self.coin_list = None
         self.wall_list = None
         self.player_sprite = None
-        arcade.set_background_color(arcade.csscolor.ALICE_BLUE)
         self.physics_engine = None
         self.view_bottom = 0
         self.view_left = 0
-
+        self.score = 0
         # Load sounds
         self.collect_coin_sound = arcade.load_sound(":resources:sounds/coin1.wav")
         self.jump_sound = arcade.load_sound(":resources:sounds/jump1.wav")
+        arcade.set_background_color(arcade.csscolor.ALICE_BLUE)
 
     def setup(self):
         self.player_list = arcade.SpriteList()
@@ -42,6 +42,10 @@ class MyGame(arcade.Window):
         self.player_sprite.center_x = 64
         self.player_sprite.center_y = 120
         self.player_list.append(self.player_sprite)
+        # Used to keep track of our scrolling
+        self.view_bottom = 0
+        self.view_left = 0
+        self.score = 0
         for x in range(0, 1250, 64):
             wall = arcade.Sprite(":resources:images/tiles/grassMid.png", TILE_SCALING)
             wall.center_x = x
@@ -67,12 +71,10 @@ class MyGame(arcade.Window):
         self.coin_list.draw()
         self.wall_list.draw()
         self.player_list.draw()
+        score_text = f"Score: {self.score}"
+        arcade.draw_text(score_text, 10 + self.view_left, 10 + self.view_bottom, arcade.csscolor.WHITE, 18)
 
     def on_key_press(self, symbol: int, modifiers: int):
-        # if symbol == arcade.key.UP or symbol == arcade.key.W:
-        #     self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED
-        # elif symbol == arcade.key.DOWN or symbol == arcade.key.S:
-        #     self.player_sprite.change_y = - PLAYER_MOVEMENT_SPEED
         if symbol == arcade.key.UP or symbol == arcade.key.W:
             if self.physics_engine.can_jump():
                 self.player_sprite.change_y = PLAYER_JUMP_SPEED
@@ -105,6 +107,8 @@ class MyGame(arcade.Window):
             coin.remove_from_sprite_lists()
             # Play a sound
             arcade.play_sound(self.collect_coin_sound)
+            self.score += 1
+
         changed = False
         left_boundary = self.view_left + LEFT_VIEWPORT_MARGIN
         if self.player_sprite.left < left_boundary:
